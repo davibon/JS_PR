@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Untitled Document</title>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+</head>
+
+<body>
+    <input type="button" value="新增" onclick="update()">
+    <input type="button" value="刪除" onclick="del()">
+    <script>
+        var arr = [85, 60, 99, 49, 77, 82, 78, 34, 12];
+        var w = 900,
+            h = 300,
+            p = 100;
+        svg();
+        bind(arr);
+        render();
+
+        function svg() {
+            d3.select("body").append("svg").attr({
+                width: w,
+                height: h,
+                id: "bar-chart"
+            });
+        }
+
+        function bind(dataSet) {
+            var arrd3 = d3.select("svg#bar-chart")
+                .selectAll("rect")
+                .data(arr);
+            arrd3.enter().append("rect");
+            arrd3.exit().remove();
+
+            //-----text-------
+            var arrd_t = d3.select("svg#bar-chart")
+                .selectAll("text")
+                .data(arr);
+            arrd_t.enter().append("text");
+            arrd_t.exit().remove();
+        }
+
+        function render() {
+            d3.selectAll("#bar-chart>rect")
+                .attr({
+                    x: function(d, i) {
+                        return p + 45 * i;
+                    },
+                    y: function(d) {
+                        return h - p - d;
+                    },
+                    width: 40,
+                    height: function(d) {
+                        return d;
+                    },
+                    fill: function(d) {
+                        if (d < 70) {
+                            return "red";
+                        } else {
+                            return "green";
+                        }
+                    }
+                });
+            d3.selectAll("#bar-chart>text")
+                .attr({
+                    x: function(d, i) {
+                        return p + 45 * i + 10;
+                    },
+                    y: function(d) {
+                        return h - p + 20;
+                    }
+                }).text(function(d) {
+                    return d;
+                });
+        }
+        //console.log(d3.selectAll("div"));
+        function update() {
+            var num = random(10, 100);
+            arr.push(num);
+            bind(arr);
+            render();
+        }
+
+        function del() {
+            arr.shift();
+            bind(arr);
+            render();
+        }
+        var random = function(m, n) {
+            return Math.floor(Math.random() * (n - m + 1)) + m;
+        }
+
+    </script>
+
+</body>
+
+</html>
