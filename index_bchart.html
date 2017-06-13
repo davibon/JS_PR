@@ -89,7 +89,11 @@
             render();
         }
         var random = function(m, n) {
-            return Math.floor(Math.random() * (n - m + 1)) + m;
+            var rScale = d3.scale.linear()
+            .domain([0,1])
+            .rangeRound([m,n]);
+            return rScale(Math.random());
+//            return Math.floor(Math.random() * (n - m + 1)) + m;
         }
 
     </script>
