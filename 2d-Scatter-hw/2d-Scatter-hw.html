@@ -1,5 +1,6 @@
 <!doctype html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Untitled Document</title>
@@ -8,6 +9,17 @@
         body {
             background: #eee;
         }
+        
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: black;
+        }
+        
+        .axis text {
+            font-size: 10px;
+        }
+
     </style>
 </head>
 
@@ -28,6 +40,7 @@
 
             bind(dataSet);
             render(dataSet);
+            btmlist(dataSet);
 
         });
 
@@ -47,6 +60,8 @@
                 height: "100%",
                 fill: "white"
             });
+            d3.select("svg").append("g").attr("id", "axisX");
+            d3.select("svg").append("g").attr("id", "axisY");
         }
 
         //4. 建立bind()
@@ -81,24 +96,113 @@
                 .range([5, 30]);
             var fScale = d3.scale.category20();
 
-            //6. 建立render()繪圖
-            d3.selectAll( "circle" )
-                .attr({ cx: function(d){
-                    return xScale(new Date(d.date));
-                },
-                cy: function(d){
-                    return yScale(d.number);
-                },
-                r: function(d){
-                    return rScale(d.amount);
-                },
-                fill:function(d){
-                    return fScale(d.city);
-                }       
-                       
-                });
-        }
-    </script>
 
+            //6. 建立render()繪圖
+            d3.selectAll("circle")
+                .attr({
+                    cx: function(d) {
+                        return xScale(new Date(d.date));
+                    },
+                    cy: function(d) {
+                        return yScale(d.number);
+                    },
+                    r: function(d) {
+                        return rScale(d.amount);
+                    },
+                    fill: function(d) {
+                        return fScale(d.city);
+                    }
+
+                });
+
+            //開始畫x,y軸線 
+            var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+            var yAxis = d3.svg.axis().scale(yScale).orient("left");
+            d3.select("svg")
+                .select("g#axisY")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + (padding - 10) + ",0)")
+                .call(yAxis);
+            d3.select("svg")
+                .select("g#axisX")
+                .attr("class", "axis")
+                .attr("transform", "translate(0," + (h - padding + 10) + ")")
+                .call(xAxis);
+
+        }
+
+
+        function unique(array) {
+            var n = [];
+
+            //去看array中每個元素，如果沒出現過就加到n中      
+            for (var i = 0; i < array.length; i++) {
+                if (n.indexOf(array[i]) < 0) {
+                    n.push(array[i]);
+                }
+            }
+
+            return n;
+        }
+
+        function btmlist(dataSet) {
+            var industryArr = dataSet.map(function(d) {
+                return d.industry;
+            });
+            //console.log(industryArr);
+            uIndustryArr = unique(industryArr);
+            console.log(uIndustryArr);
+
+            var fIndustryArr = uIndustryArr.filter(function(d) {
+                return d != "";
+            });
+
+            //bind input
+            var selection = d3.select("body")
+                .append("select")
+                .selectAll("option")
+                .data(fIndustryArr);
+            selection.enter().append("option");
+            selection.exit().remove();
+
+            //render
+            d3.selectAll("option")
+                .attr({
+                    value: function(d) {
+                        return d;
+                    }
+                })
+                .text(function(d) {
+                    return d;
+                });
+
+            d3.select("select").insert("option", ":first-child")
+                .attr("value", "All")
+                .text("顯示全部");
+
+            d3.select("select").on("change", function(d) {
+                var industryName = d3.select("select").property("value");
+                console.log(industryName);
+                update(industryName);
+            });
+
+            function update(industryName) {
+                if (industryName === "All") {
+                    bind(dataSet);
+                    render(dataSet);
+                    return;
+                } else {
+                    var newDataSet = dataSet.filter(function(d) {
+                        return d.industry === industryName;
+                    });
+                }
+                bind(newDataSet);
+                render(newDataSet);
+            }
+
+        }
+
+    </script>
 </body>
+
 </html>
