@@ -42,7 +42,7 @@
 
             // 產生 Google Map…
             var map = new google.maps.Map(d3.select("#map").node(), {
-              zoom: 8,
+              zoom: 16,
               center: new google.maps.LatLng(25.143271,121.548725),
               mapTypeId: google.maps.MapTypeId.TERRAIN
             });
@@ -97,12 +97,12 @@
                           "font-size": "13px",
                           opacity: 0
                       })     
-                      .text(function(d) { return ???; })
+                      .text(function(d) { return d.value.name; })
                       
 
                   function transform(d) {
-//                      console.log(d);
-                    d = new google.maps.LatLng(???,???);
+                    console.log(d);
+                    d = new google.maps.LatLng(d.value.lat,d.value.lng);
                       
                     d = projection.fromLatLngToDivPixel(d);
                       
