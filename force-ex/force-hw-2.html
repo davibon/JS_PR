@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>D3 Layout-Force</title>
+    <script src="https://d3js.org/d3.v3.js"></script>
+    <style>
+        body {
+            background: #eee;
+        }
+
+    </style>
+</head>
+
+<body>
+    <script>
+        var w = 1000;
+        var h = 600;
+        var padding = 90;
+        var rScale;
+        var fScale = d3.scale.category20c();
+
+        svg();
+
+        d3.json("villchief.json", function(dataSet) {
+            bind(dataSet);
+        });
+
+
+
+        function svg() {
+            d3.select("body").append("svg").attr({
+                width: w,
+                height: h
+            });
+            d3.select("svg").append("g").append("rect").attr({
+                width: "100%",
+                height: "100%",
+                fill: "white"
+            });
+
+        }
+
+        function bind(dataSet) {
+            var nDataSet = d3.nest()
+                .key(function(d) {
+                    return d.cityname;
+
+                })
+                .key(function(d) {
+                    return d.townname;
+
+                })
+                .entries(dataSet);
+
+            var root = {
+                key: "台灣",
+                values: nDataSet
+            };
+
+            console.log(root);
+
+            var pack = d3.layout.pack()
+                .size([w, h])
+                .padding(padding)
+                .value(function(d) {
+                    return d.key;
+                })
+                .children(
+                    //TODO-3.指定子結點<問>要回傳什麼?
+                    function(d) {
+                        return d.values;
+                    }
+                );
+
+
+            var nodes = pack.nodes(root);
+
+            nodes = nodes.filter(function(d) {
+                return d.depth <= 2;
+            });
+
+            var links = pack.links(nodes);
+
+            links = links.filter(function(d) {
+                return d.target.depth <= 2;
+            });
+
+            var force = d3.layout.force()
+                .size([w, h])
+                //TODO-1.3:調整彼此引力參數
+                .charge(-50)
+                //.gravity(0.2)
+                .nodes(nodes)
+                //TODO-2.2:使用links
+                .links(links)
+                .on("tick", render)
+                .start();
+
+
+
+            //TODO-2.3:綁定線段
+
+            //console.log(links);
+            var selection_l = d3.select("svg")
+                .selectAll("line")
+                .data(links);
+            selection_l.enter().append("line");
+            selection_l.exit().remove();
+
+            var selection = d3.select("svg")
+                .selectAll("circle")
+                .data(nodes);
+            selection.enter().append("circle").call(force.drag);
+            selection.exit().remove();
+
+        }
+
+        function render() {
+            //            console.log(d3.select("circle").text(function(d) {
+            //                return console.log(d);
+            //            }));
+            //TODO-1.2:把每個circle畫出來      
+            d3.selectAll("circle")
+                .attr({
+                    cx: function(d) {
+                        return d.x
+                    },
+                    cy: function(d) {
+                        return d.y
+                    },
+                    r: 5,
+                    fill: function(d) {
+                        return fScale(d.key);
+                    },
+                    stroke: "#666"
+                });
+            //TODO-2.4:把每個line畫出來
+            d3.selectAll("line")
+                .attr({
+                    x1: function(d) {
+                        return d.source.x
+                    },
+                    y1: function(d) {
+                        return d.source.y
+                    },
+                    x2: function(d) {
+                        return d.target.x
+                    },
+                    y2: function(d) {
+                        return d.target.y
+                    },
+                    stroke: "#666"
+                });
+
+        }
+
+    </script>
+
+</body>
+
+</html>

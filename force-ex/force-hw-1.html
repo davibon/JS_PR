@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>D3 Layout-Force</title>
+    <script src="https://d3js.org/d3.v3.js"></script>
+    <style>
+        body {
+            background: #eee;
+        }
+
+    </style>
+</head>
+
+<body>
+    <script>
+        var w = 1000;
+        var h = 600;
+        var padding = 90;
+        var rScale;
+        var fScale = d3.scale.category20c();
+
+        svg();
+        bind();
+
+
+        function svg() {
+            d3.select("body").append("svg").attr({
+                width: w,
+                height: h
+            });
+            d3.select("svg").append("g").append("rect").attr({
+                width: "100%",
+                height: "100%",
+                fill: "white"
+            });
+
+        }
+
+        function bind() {
+
+            var nodes = [];
+            //TODO-1.1: 產生100個資料點
+            for (var i = 0; i < 100; i++) {
+                nodes.push({
+                    idx: i,
+                    value: Math.random() * 10 + 1
+                });
+
+            }
+
+
+            //TODO-2.1:用線段把資料點連起來
+            var links = [];
+            for (var i = 0; i < 99; i++) {
+                links.push({
+                    source: nodes[i],
+                    target: nodes[i + 1]
+                });
+
+            }
+
+            var force = d3.layout.force()
+                .size([w, h])
+                //TODO-1.3:調整彼此引力參數
+                .charge(function(d) {
+                    return -d.value;
+                })
+                //.gravity(0.2)
+                .nodes(nodes)
+                //TODO-2.2:使用links
+                .links(links)
+                .on("tick", render)
+                .start();
+
+
+
+            //TODO-2.3:綁定線段
+
+            //console.log(links);
+            var selection_l = d3.select("svg")
+                .selectAll("line")
+                .data(links);
+            selection_l.enter().append("line");
+            selection_l.exit().remove();
+
+            var selection = d3.select("svg")
+                .selectAll("circle")
+                .data(nodes);
+            selection.enter().append("circle").call(force.drag);
+            selection.exit().remove();
+
+        }
+
+        function render() {
+            //            console.log(d3.select("circle").text(function(d) {
+            //                return console.log(d);
+            //            }));
+            //TODO-1.2:把每個circle畫出來      
+            d3.selectAll("circle")
+                .attr({
+                    cx: function(d) {
+                        return d.x
+                    },
+                    cy: function(d) {
+                        return d.y
+                    },
+                    r: function(d) {
+                        return d.value
+                    },
+                    fill: function(d) {
+                        return fScale(d.idx);
+                    },
+                    stroke: "#666"
+                });
+            //TODO-2.4:把每個line畫出來
+            d3.selectAll("line")
+                .attr({
+                    x1: function(d) {
+                        return d.source.x
+                    },
+                    y1: function(d) {
+                        return d.source.y
+                    },
+                    x2: function(d) {
+                        return d.target.x
+                    },
+                    y2: function(d) {
+                        return d.target.y
+                    },
+                    stroke: "#666"
+                });
+
+        }
+
+    </script>
+
+</body>
+
+</html>

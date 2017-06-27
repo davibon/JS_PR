@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tree Diagram</title>
+    <script src="https://d3js.org/d3.v3.js"></script>
+    <style>
+        body{
+            background: #eee;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        var w=800, h=8000;
+        svg();
+        
+        d3.json("villchief.json",function(dataSet){
+            
+            var fDataSet = dataSet.filter(function(d){
+                return d.cityname==="臺北市";
+            });
+            
+            var nested_dataSet = d3.nest()
+                                   .key(function(d){
+                                        return d.cityname
+                                   })
+                                   .key(function(d){
+                                       return d.townname
+                                   })
+//                                   .key(function(d){
+//                                       return d.villname
+//                                   })
+                                   .entries(fDataSet);
+            
+            var root = {key: "台灣", values: nested_dataSet};
+            
+            bind(root);
+            render();
+            
+            
+            
+        });
+        function svg(){
+            d3.select("body").append("svg").attr({
+                width: w,
+                height: h
+            });
+            d3.select("svg").append("g").append("rect").attr({
+                width: "100%",
+                height: "100%",
+                fill: "white"
+            });
+           
+        }
+        function bind(root){
+            console.log(root);
+            
+            var tree = d3.layout.tree()
+                            .size([h-200,w-200])
+                            .value(function(d){
+                                return d.key;
+                            })
+                            .children(function(d){
+                                return d.values;
+                            })
+                            .separation(function(a,b){
+                                return (a.parent === b.parent ? 1: 2);
+                            });
+            
+            var nodes = tree.nodes(root);
+//            console.log(nodes);
+            var links = tree.links(nodes);
+//            console.log(links);
+            
+            var svg = d3.select("svg");
+            
+            var selection_diagonal = svg.selectAll("path")
+                                        .data(links);
+            selection_diagonal.enter().append("path");
+            selection_diagonal.exit().remove();     
+            
+            var selection_circle = svg.selectAll("circle")
+                                      .data(nodes);
+            selection_circle.enter().append("circle");
+            selection_circle.exit().remove();
+            
+            var selection_text = svg.selectAll("text")
+                                        .data(nodes);
+            selection_text.enter().append("text");
+            selection_text.exit().remove();
+            
+        }
+        function render(){
+            d3.selectAll("circle")
+              .attr({
+                cx: function(d){
+                    return d.y+50;
+                },
+                cy: function(d){
+                    return d.x+100;
+                },
+                r: 5,
+                fill: "lightgreen",
+                "stroke": "green"
+              });
+            d3.selectAll("text")
+              .attr({
+                x: function(d){
+                    if(d.children){
+                        return d.y-10;
+                    }
+                    else{
+                        return d.y+60;
+                    }
+                },
+                y: function(d){
+                    return d.x+106;
+                }
+                
+              }).text(function(d){
+                if(!d.children){
+                    return d.villname;
+                }
+                else{
+                    return d.key;
+                }
+                
+             });
+            var diagonal = d3.svg.diagonal()
+                            .projection(function(d){
+                                return [d.y+50, d.x+100];
+                            });
+            d3.selectAll("path")
+              .attr({
+                d: diagonal,
+                fill: "transparent",
+                stroke: "black"
+              });
+        }
+    </script>
+</body>
+</html>

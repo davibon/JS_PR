@@ -45,19 +45,44 @@
         <p id="industry">tooltip</p>
         <p id="count">tooltip</p>
     </div>
+    <input type="button" value="play" id="timer">
     <script>
         // 1. 定義width, height, padding, letterList變數
         var w = 900;
         var h = 600;
         var padding = 60;
         var letterList = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "M", "N", "O", "P", "Q", "T", "U", "V", "W", "X", "Z"];
-
+        var xScale, yScale, rScale, fScale;
         //2. 建立svg()畫布環境
 
         svg();
 
         //3. 用d3讀取csv
         d3.csv("cancer_data.csv", mid, function(dataSet) {
+            dataSet = dataSet.filter(function(d) {
+                return d.category != "全癌症";
+            });
+
+
+            xScale = d3.scale.linear().domain([
+                0, d3.max(dataSet, function(d) {
+                    return d.crude_rate;
+                })
+            ]).range([padding, w - padding]);
+            yScale = d3.scale.linear()
+                .domain([0, d3.max(dataSet, function(d) {
+                    return d.avg_age;
+                })])
+                .range([h - padding, padding]);
+            rScale = d3.scale.linear()
+                .domain([d3.min(dataSet, function(d) {
+                    return d.count;
+                }), d3.max(dataSet, function(d) {
+                    return d.count;
+                })])
+                .range([5, 30]);
+            fScale = d3.scale.category20();
+
 
             bind(dataSet);
             render(dataSet);
@@ -101,30 +126,14 @@
         function render(dataSet) {
             //5. 定義xScale,yScale,rScale, fScale比例尺(range目的在決定在svg上位置)
 
-            var xScale = d3.time.scale().domain([
-                new Date("1979-01-01"),
-                new Date("2016-08-01")
-            ]).range([padding, w - padding]);
-            var yScale = d3.scale.linear()
-                .domain([0, d3.max(dataSet, function(d) {
-                    return d.avg_age;
-                })])
-                .range([h - padding, padding]);
-            var rScale = d3.scale.linear()
-                .domain([d3.min(dataSet, function(d) {
-                    return d.count;
-                }), d3.max(dataSet, function(d) {
-                    return d.count;
-                })])
-                .range([5, 30]);
-            var fScale = d3.scale.category20();
+
 
 
             //6. 建立render()繪圖
             d3.selectAll("circle")
                 .attr({
                     cx: function(d) {
-                        return xScale(new Date(d.date));
+                        return xScale(d.crude_rate);
                     },
                     cy: function(d) {
                         return yScale(d.avg_age);
@@ -151,9 +160,9 @@
                     });
 
                     tooltip.select("#industry").text(function() {
-                        return d.date+d.category;
+                        return d.date + d.category;
                     });
-                
+
                     tooltip.select("#count").text(function() {
                         return d.count;
                     });
@@ -162,6 +171,8 @@
                 .on("mouseout", function(d) {
                     d3.select("#tooltip").classed("hidden", true);
                 });
+
+            d3.selectAll("circle").transition().ease("circle").duration(1000);
             //                .append("title").text(function(d) {
             //                    return "縣市：" + d.city + "\r\n產業：" + d.industry;
             //                });
@@ -183,18 +194,7 @@
         }
 
 
-        function unique(array) {
-            var n = [];
 
-            //去看array中每個元素，如果沒出現過就加到n中      
-            for (var i = 0; i < array.length; i++) {
-                if (n.indexOf(array[i]) < 0) {
-                    n.push(array[i]);
-                }
-            }
-
-            return n;
-        }
 
         function btmlist(dataSet) {
             var industryArr = dataSet.map(function(d) {
@@ -251,6 +251,67 @@
                 render(newDataSet);
             }
 
+            d3.select("#timer").on("click", function(d) {
+
+
+
+                var dDataSet = dataSet.map(function(d) {
+                    return d.date;
+                });
+
+                var dateArr = unique(dDataSet);
+
+                console.log(dateArr);
+
+                var idx = 0;
+
+                d3.select("svg").append("text").attr({
+                    "id": "year",
+                    "x": w - padding,
+                    "y": h - padding,
+                    "opacity": 0.2,
+                    "text-anchor": "end",
+                    "font-size": 200
+                });
+
+                window.setInterval(function() {
+                    var categoryName =
+                        d3.select("select").property("value");
+
+                    var n2DataSet = dataSet.filter(function(d) {
+                        if (categoryName === "All") {
+                            return d.date === dateArr[idx];
+                        } else {
+                            return d.category === categoryName && d.date === dateArr[idx];
+                        }
+                    });
+
+                    bind(n2DataSet);
+                    render(n2DataSet);
+
+                    d3.select("#year").text(dateArr[idx]);
+
+                    idx++;
+
+                    idx = idx % dateArr.length;
+
+                    console.log(dateArr[idx]);
+                }, 1000);
+            });
+
+        }
+
+        function unique(array) {
+            var n = [];
+
+            //去看array中每個元素，如果沒出現過就加到n中      
+            for (var i = 0; i < array.length; i++) {
+                if (n.indexOf(array[i]) < 0) {
+                    n.push(array[i]);
+                }
+            }
+
+            return n;
         }
 
     </script>
